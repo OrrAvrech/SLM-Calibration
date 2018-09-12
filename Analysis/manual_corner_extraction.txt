@@ -1,0 +1,14 @@
+Manual extraction
+**there is mirroring on both axes with respect to the squares, so the relevant square corner should be the lower right:
+
+Right-upper corner:
+X: 1241
+Y: 54
+
+Upper-left corner:
+X: 54
+Y: 71
+
+Bottom -left corner:
+X: 64
+Y: 985
