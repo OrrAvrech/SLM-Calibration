@@ -1,7 +1,7 @@
 function [ gray_vid ] = avi2gray( avi_file )
+% Turns an input avi file into a stack of grayscale frames.
 avi = VideoReader(avi_file);
 length = numel(avi);
-% [w, h] = size(avi(1).cdata);
 gray_vid = zeros(avi.Height, avi.Width, length);
 ii = 1;
 while hasFrame(avi)
