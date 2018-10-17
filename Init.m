@@ -4,3 +4,4 @@ addpath('CreateMasks\');
 addpath('Analysis\');
 
 addpath(genpath('../Measurements'));
+addpath(genpath('../../measurements'));

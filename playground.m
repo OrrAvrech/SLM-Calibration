@@ -10,7 +10,7 @@ imshow(ch_0, []);
 hold on
 plot(imagePoints(:,1),imagePoints(:,2), 'ro');
 
-%% Fit Affine Transformation
+%% Fit Aff>> playground
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % First, create an affine transform and a transformed (moving) image.
 % Then, use corner detection to recover the transform from the
@@ -57,3 +57,41 @@ tform_boundaries = fitgeotrans(movingPts, inputPts, 'affine');
 diffPatch = imcrop(diff);
 diffPatch_recon = imwarp(diffPatch, tform_boundaries);
 imshowpair(diffPatch, diffPatch_recon, 'montage');
+
+
+%% Calibration Flow - Alpha Version (high level flow structure definition)
+% *manual corner extraction for affine transform detection*
+ref_pts_post = load(); % or manually 
+ref_pts_pre = load(); % or manually
+% load measurements
+measured_vid = load();
+measured_neg_vid = load();
+% get transformation
+tform = fitgeotrans(ref_pts_post, ref_pts_pre, 'affine');
+    
+% 1st option 
+    % translate x,y to x_meas, y_meas and continue analysis on
+    % measured vid
+x_meas, y_meas = translate_coor(x, y, tform); % TODO: translate_coor
+% choose x,y to get LUT
+function [ LUT ] = get_LUT1(x_meas, y_meas, tform, measured_vid, measured_neg_vid);
+    % sum of vid + neg_vid should give all pixels in one vid
+    measured_combined = measured_vid + measured_neg_vid;
+    recon_vid = imwarp(measured_combined, tform);
+    pixel_vid = recon_vid(x_meas,y_meas,:);
+    first_cycle = get_first_cycle(pixel_vid); % get the first min to max time interval
+    LUT = cycle2LUT(first_cycle);
+return LUT
+end
+
+% 2nd option
+    % translate measured_vid to recon_vid, and continue analysis 
+    % with original x,y 
+    measured_combined = measured_vid + measured_neg_vid;    
+    recon_vid = imwarp(measured_combined, tform);
+    
+function [ LUT ] = get_LUT2(x, y, recon_vid);
+    pixel_vid = recon_vid(x,y,:);
+    first_cycle = get_first_cycle(pixel_vid); % get the first min to max time interval
+    LUT = cycle2LUT(first_cycle);
+end
