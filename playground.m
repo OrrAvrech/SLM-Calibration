@@ -60,12 +60,15 @@ imshowpair(diffPatch, diffPatch_recon, 'montage');
 
 
 %% Calibration Flow - Alpha Version (high level flow structure definition)
+
 % *manual corner extraction for affine transform detection*
 ref_pts_post = load(); % or manually 
 ref_pts_pre = load(); % or manually
 % load measurements
-measured_vid = load();
-measured_neg_vid = load();
+measured_vid = load(); % checkerboard
+measured_neg_vid = load(); % checkerboard
+measured_combined = measured_vid + measured_neg_vid;
+
 % get transformation
 tform = fitgeotrans(ref_pts_post, ref_pts_pre, 'affine');
     
@@ -73,25 +76,23 @@ tform = fitgeotrans(ref_pts_post, ref_pts_pre, 'affine');
     % translate x,y to x_meas, y_meas and continue analysis on
     % measured vid
 x_meas, y_meas = translate_coor(x, y, tform); % TODO: translate_coor
+
 % choose x,y to get LUT
-function [ LUT ] = get_LUT1(x_meas, y_meas, tform, measured_vid, measured_neg_vid);
+function [ LUT ] = get_LUT1(x_meas, y_meas, tform, measured_combined)
     % sum of vid + neg_vid should give all pixels in one vid
-    measured_combined = measured_vid + measured_neg_vid;
-    recon_vid = imwarp(measured_combined, tform);
-    pixel_vid = recon_vid(x_meas,y_meas,:);
+    %recon_vid = imwarp(measured_combined, tform);
+    pixel_vid = measured_combined(x_meas,y_meas,:);
     first_cycle = get_first_cycle(pixel_vid); % get the first min to max time interval
-    LUT = cycle2LUT(first_cycle);
-return LUT
+    LUT = cycle2LUT(first_cycle); % interpolation
 end
 
 % 2nd option
     % translate measured_vid to recon_vid, and continue analysis 
     % with original x,y 
-    measured_combined = measured_vid + measured_neg_vid;    
-    recon_vid = imwarp(measured_combined, tform);
+    recon_vid = imwarp(measured_combined, inv_tform); % TODO: check if inverse
     
-function [ LUT ] = get_LUT2(x, y, recon_vid);
+function [ LUT ] = get_LUT2(x, y, recon_vid)
     pixel_vid = recon_vid(x,y,:);
     first_cycle = get_first_cycle(pixel_vid); % get the first min to max time interval
-    LUT = cycle2LUT(first_cycle);
+    LUT = cycle2LUT(first_cycle); % interpolation
 end
