@@ -58,7 +58,26 @@ diffPatch = imcrop(diff);
 diffPatch_recon = imwarp(diffPatch, tform_boundaries);
 imshowpair(diffPatch, diffPatch_recon, 'montage');
 
-
+%% Smooth and Segment
+%%
+meas = fitIntensity('..\Measurements\final_measurements\measurments\constant.avi');
+%%
+meas_smoothed = smooth(1:256, meas, 0.1, 'rloess');
+% plot(meas_smoothed);
+[max_val, max_idx] = max(meas_smoothed);
+[min_val, min_idx] = min(meas_smoothed);
+% Cut segment and fit to 2nd order polynomial
+figure;
+plot(min_idx : max_idx, meas(min_idx : max_idx), 'ro');
+p = polyfit((min_idx : max_idx)', meas(min_idx : max_idx), 2);
+meas_poly = polyval(p,(min_idx : max_idx)');
+hold on
+plot((min_idx : max_idx)', meas_poly)
+hold off
+% Find LUT
+LUT_slice = Slice2LUT(meas_poly); % TODO: complex output
+figure;
+plot(LUT_slice, min_idx : max_idx);
 %% Calibration Flow - Alpha Version (high level flow structure definition)
 
 % *manual corner extraction for affine transform detection*
@@ -77,6 +96,11 @@ tform = fitgeotrans(ref_pts_post, ref_pts_pre, 'affine');
     % measured vid
 x_meas, y_meas = translate_coor(x, y, tform); % TODO: translate_coor
 
+% 2nd option
+    % translate measured_vid to recon_vid, and continue analysis 
+    % with original x,y 
+    recon_vid = imwarp(measured_combined, inv_tform); % TODO: check if inverse
+
 % choose x,y to get LUT
 function [ LUT ] = get_LUT1(x_meas, y_meas, tform, measured_combined)
     % sum of vid + neg_vid should give all pixels in one vid
@@ -85,11 +109,6 @@ function [ LUT ] = get_LUT1(x_meas, y_meas, tform, measured_combined)
     first_cycle = get_first_cycle(pixel_vid); % get the first min to max time interval
     LUT = cycle2LUT(first_cycle); % interpolation
 end
-
-% 2nd option
-    % translate measured_vid to recon_vid, and continue analysis 
-    % with original x,y 
-    recon_vid = imwarp(measured_combined, inv_tform); % TODO: check if inverse
     
 function [ LUT ] = get_LUT2(x, y, recon_vid)
     pixel_vid = recon_vid(x,y,:);
