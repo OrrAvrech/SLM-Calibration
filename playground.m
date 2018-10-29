@@ -75,9 +75,11 @@ hold on
 plot((min_idx : max_idx)', meas_poly)
 hold off
 % Find LUT
-LUT_slice = Slice2LUT(meas_poly); % TODO: complex output
+LUT_sig = Slice2LUT(meas_poly); 
 figure;
-plot(LUT_slice, min_idx : max_idx);
+plot(LUT_sig, min_idx : max_idx);
+%% Find Extrema
+[ymax, xmax, ymin, xmin] = extrema(meas);
 %% Calibration Flow - Alpha Version (high level flow structure definition)
 
 % *manual corner extraction for affine transform detection*
