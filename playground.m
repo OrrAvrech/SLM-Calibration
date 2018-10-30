@@ -63,7 +63,8 @@ imshowpair(diffPatch, diffPatch_recon, 'montage');
 meas = fitIntensity('..\Measurements\final_measurements\measurments\constant.avi');
 %%
 meas_smoothed = smooth(1:256, meas, 0.1, 'rloess');
-% plot(meas_smoothed);
+figure;
+plot(meas_smoothed);
 [max_val, max_idx] = max(meas_smoothed);
 [min_val, min_idx] = min(meas_smoothed);
 % Cut segment and fit to 2nd order polynomial
@@ -80,6 +81,33 @@ figure;
 plot(LUT_sig, min_idx : max_idx);
 %% Find Extrema
 [ymax, xmax, ymin, xmin] = extrema(meas);
+
+figure;
+plot(1 : 256, meas);
+hold on
+plot(xmax, ymax, 'ro', xmin, ymin, 'bo');
+hold off
+
+first_seg = xmax(1) : xmin(1);
+first_slice = meas(first_seg);
+poly = polyfit(first_seg', first_slice, 2);
+figure;
+plot(first_seg, first_slice);
+hold on
+first_poly = polyval(poly, first_seg');
+plot(first_seg, first_poly)
+xlabel('I_{Input}')
+ylabel('I_{measured}')
+legend('data', '2^{nd} order poly fit')
+hold off
+
+% Find LUT
+first_LUT_sig = Slice2LUT(first_slice); 
+figure;
+plot(first_LUT_sig, first_seg/256);
+xlabel('\phi [rad]')
+ylabel('V/V_{max}')
+legend('LUT')
 %% Calibration Flow - Alpha Version (high level flow structure definition)
 
 % *manual corner extraction for affine transform detection*
