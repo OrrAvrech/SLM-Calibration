@@ -108,6 +108,41 @@ plot(first_LUT_sig, first_seg/256);
 xlabel('\phi [rad]')
 ylabel('V/V_{max}')
 legend('LUT')
+
+%% Averaging meas
+[ymax, xmax, ymin, xmin] = extrema(meas);
+% The right part starts from the 4th minima
+sorted_xmin = sort(xmin);
+start_min = sorted_xmin(4);
+right_meas = meas(start_min : end);
+windowSize = 9; 
+b = (1/windowSize)*ones(1,windowSize);
+a = 1;
+filt_right_meas = filter(b,a,right_meas);
+
+figure;
+plot(right_meas)
+hold on
+plot(filt_right_meas)
+legend('Input Data','Filtered Data')
+
+%% polyfit meas
+right_seg = start_min : 256;
+p = polyfit(right_seg', right_meas, 2);
+figure;
+plot(right_seg, right_meas);
+hold on
+right_poly = polyval(p, right_seg');
+plot(right_seg, right_poly)
+hold off
+
+% concat
+meas2 = meas;
+meas2(start_min : end) = right_poly;
+figure;
+plot(meas2)
+
+
 %% Calibration Flow - Alpha Version (high level flow structure definition)
 
 % *manual corner extraction for affine transform detection*
