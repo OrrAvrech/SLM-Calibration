@@ -3,7 +3,54 @@ try
 catch
    Init;
 end
+%% Load Measurements
+path_to_meas = 'constant.avi'; % Choose measurement
+captured = avi2gray(path_to_meas);
+[height, width, num_frames] = size(captured);
+%% Denoise video - Denoise 1
+captured_d = zeros(size(captured));
+mask_center_dist = 2;
+mask_width = 60;
+for frame_num = 1 : num_frames
+    snap_frame = captured(:,:,frame_num);
+    snap_frame_fourier = fftshift(fft2(snap_frame));
+    snap_frame_f_d = snap_frame_fourier;    
+    snap_frame_f_d((height/2-(mask_center_dist+mask_width)):(height/2-mask_center_dist),width/2+1) = min(min(snap_frame_f));
+    snap_frame_f_d((height/2+mask_center_dist):(height/2+(mask_center_dist+mask_width)),width/2+1) = min(min(snap_frame_f));
+    snap_frame_d = abs(ifft2(ifftshift(snap_frame_f_d)));
+    captured_d(:,:,frame_num) = snap_frame_d;
+end
 
+%% Denoise video - Denoise 2
+captured_d = zeros(size(captured));
+% Fit function - sum of 4 sine functions plus bias - overall 19 parameters
+F = @(x,xdata)x(1)*sin(x(2)*xdata+x(3)) + x(4) + x(5)*sin(x(6)*xdata+x(7))+ x(8)*sin(x(9)*xdata+x(10))+x(11)*sin(x(12)*xdata+x(13))+x(14)*sin(x(15)*xdata+x(16))+x(17)*sin(x(18)*xdata+x(19));
+x0 = [1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]; %initial conditions (19)
+x_input = 1:height;
+for frame_num = 1 : num_frames
+    snap_frame = captured(:,:,frame_num);
+    % choose slice for sine estimation:
+    measured = snap_frame(:,width/2)'; % fit sine to middle slice
+%     measured = mean(snap_frame,2); % fit sine to mean
+    [x,resnorm,~,exitflag,output] = lsqcurvefit(F,x0,x_input,measured); % fit
+    % reconstruct noise (currently removed bias)
+    noise_est_1d = x(1)*sin(x(2)*x_input+x(3))+ x(5)*sin(x(6)*x_input+x(7))+ x(8)*sin(x(9)*x_input+x(10))+x(11)*sin(x(12)*x_input+x(13))+x(14)*sin(x(15)*x_input+x(16))+x(17)*sin(x(18)*x_input+x(19));
+    noise_est_1d_norm = noise_est_1d*mean(mean(snap_frame)); % normalize noise
+    noise_est_2d = repmat(noise_est_1d_norm', 1, width);
+    snap_frame_d = snap_frame - noise_est_2d; % denoise, subtract noise
+    captured_d(:,:,frame_num) = snap_frame_d;
+end
+%% Get transformation
+
+
+%% Transform Vid
+trans_vid = imwarp(captured_d, inv_tform);
+
+%% Main Function ; Input: trans_vid, wanted (x,y) ; Output: LUT
+pixel_vid = recon_vid(x,y,:);
+LUT = get_LUT_(pixel_vid);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
 meas = fitIntensity('constant.avi');
 [~, ~, ~, xmin] = extrema(meas);
 xmin_sorted = sort(xmin);
