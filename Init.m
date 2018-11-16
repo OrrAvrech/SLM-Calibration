@@ -1,7 +1,8 @@
-% TODO: conditional addpath
-addpath('Preprocessing\');
-addpath('CreateMasks\');
-addpath('Analysis\');
+%% Init file
+% parent directory contains the entire code and measurements.
+% code and measurement directories may be separate, but both folders
+% should be in the parent directory.
 
-addpath(genpath('../Measurements'));
-addpath(genpath('../../measurements'));
+parent_dir = (fullfile('..', '..'));
+p = genpath(parent_dir);
+addpath(p);

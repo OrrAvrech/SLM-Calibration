@@ -1,3 +1,9 @@
+try
+    pathIndicator();
+catch
+   Init;
+end
+
 meas = fitIntensity('constant.avi');
 [~, ~, ~, xmin] = extrema(meas);
 xmin_sorted = sort(xmin);

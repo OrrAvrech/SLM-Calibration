@@ -1,7 +1,11 @@
 %% PLAYGROUND
 % Sharing contrib code
 
-Init;
+try
+    pathIndicator();
+catch
+   Init;
+end
 
 %% Checkerboard Detection
 ch_0 = checkerboard_custom(32, 512, 512, 255);
