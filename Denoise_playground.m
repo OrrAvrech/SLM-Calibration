@@ -5,8 +5,9 @@ Init;
 
 %% load data 
 captured = avi2gray('constant.avi');
+[height, width, num_frames] = size(captured);
 %% Get a frame
-frame_number = 50;
+frame_number = 100;
 snap_frame = captured(:,:,frame_number);
 
 %% Fourier 
@@ -16,8 +17,10 @@ snap_frame_f = abs(snap_frame_fourier);
 
 %% Denoise
 snap_frame_f_d = snap_frame_fourier;
-snap_frame_f_d(1:508,641) = min(min(snap_frame_f));
-snap_frame_f_d(516:end,641) = min(min(snap_frame_f));
+mask_center_dist = 2;
+mask_width = 60;
+snap_frame_f_d((height/2-(mask_center_dist+mask_width)):(height/2-mask_center_dist),width/2+1) = min(min(snap_frame_f));
+snap_frame_f_d((height/2+mask_center_dist):(height/2+(mask_center_dist+mask_width)),width/2+1) = min(min(snap_frame_f));
 % snap_frame_d = ifft2(exp(snap_frame_f_d-1));
 snap_frame_d = abs(ifft2(ifftshift(snap_frame_f_d)));
 % snap_frame_d = log(snap_frame_d)+1;
@@ -41,12 +44,14 @@ title('Denoised Frame');
 impixelinfo;
 %% denoise video
 captured_d = zeros(size(captured));
-for frame_num = 1 : size(captured,3)
+mask_center_dist = 2;
+mask_width = 60;
+for frame_num = 1 : num_frames
     snap_frame = captured(:,:,frame_num);
     snap_frame_fourier = fftshift(fft2(snap_frame));
-    snap_frame_f_d = snap_frame_fourier;
-    snap_frame_f_d(1:508,641) = min(min(snap_frame_f));
-    snap_frame_f_d(516:end,641) = min(min(snap_frame_f));
+    snap_frame_f_d = snap_frame_fourier;    
+    snap_frame_f_d((height/2-(mask_center_dist+mask_width)):(height/2-mask_center_dist),width/2+1) = min(min(snap_frame_f));
+    snap_frame_f_d((height/2+mask_center_dist):(height/2+(mask_center_dist+mask_width)),width/2+1) = min(min(snap_frame_f));
     snap_frame_d = abs(ifft2(ifftshift(snap_frame_f_d)));
     captured_d(:,:,frame_num) = snap_frame_d;
 end
