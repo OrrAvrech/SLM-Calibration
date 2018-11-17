@@ -9,8 +9,7 @@ xmin = v(tf_min);
 ymax = pvid(tf_max);
 ymin = pvid(tf_min);
 
-
-[ymin_sorted, xmin_sorted] = sort(ymin);  
+[~, xmin_sorted] = sort(ymin);  
 
 right_seg = xmin(xmin_sorted(3)) : 256;
 third_peak_seg = xmin(2) : xmin(xmin_sorted(3));
@@ -24,6 +23,8 @@ proc_pvid(right_seg) = right_poly;
 
 if PLOT
     plot(v, proc_pvid);
+    xlabel('Voltage [a.u]');
+    ylabel('Intensity [a.u]');
 end
 
 

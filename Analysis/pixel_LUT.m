@@ -23,6 +23,8 @@ if PLOT_EXT
     plot(v, proc_pvid);
     hold on
     plot(xmax, ymax, 'r*', xmin, ymin, 'bo');
+    xlabel('Voltage [a.u]');
+    ylabel('Intensity [a.u]');
     hold off
 end
 

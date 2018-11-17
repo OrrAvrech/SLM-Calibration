@@ -51,125 +51,10 @@ tform = fitgeotrans(movingPts, inputPts, 'affine');
 trans_vid = imwarp(captured_d, tform); % SLM coordinates
 
 %% Main Function ; Input: trans_vid, wanted (x,y) ; Output: LUT
-pixel_vid = recon_vid(x,y,:);
-LUT = get_LUT_(pixel_vid);
+LUT = pixel_LUT_wrapper(trans_vid, x, y);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-meas = fitIntensity('constant.avi');
-[~, ~, ~, xmin] = extrema(meas);
-xmin_sorted = sort(xmin);
-start_min = xmin_sorted(4);
-
-%% PolyFit for right part
-right_seg = start_min : 256;
-right_meas = meas(right_seg);
-p = polyfit(right_seg', right_meas, 2);
-right_poly = polyval(p, right_seg');
-% concat
-meas2 = meas;
-meas2(start_min : end) = right_poly;
-
-%% Find Extrema for a fitted right part measurement
-[ymax, xmax, ymin, xmin] = extrema(meas2);
-xmin_sorted = sort(xmin);
-xmax_sorted = sort(xmax);
-
-figure;
-plot(1 : 256, meas2);
-hold on
-plot(xmax, ymax, 'rx', xmin, ymin, 'bo');
-hold off
-
-%% Divide into segments
-segments = [];
-max_num = length(xmax_sorted);
-for ii = 1 : max_num - 1
-    segments{2*ii-1} = xmax_sorted(ii) : xmin_sorted(ii + 1);
-    segments{2*ii} = xmin_sorted(ii + 1) : xmax_sorted(ii + 1);
-end
-segments{end+1} = xmax_sorted(max_num) : 256;
-
-%% Find LUT for each slice
-LUTs = [];
-for ii = 1 : length(segments)
-    slice = meas2(segments{ii});
-    if mod(ii, 2) ~= 0
-        slice = flip(slice);
-    end
-    LUTs{ii} = Slice2LUT(slice);
-end
-
-%% Stack LUTs
-LUT_stack = zeros(256, 1);
-LUT_stack(segments{1}) = LUTs{1};
-for ii = 2 : length(LUTs)
-    slice = LUTs{ii};
-    slice = slice(2 : end) + (ii-1)*pi;
-    seg = segments{ii}(2 : end);
-    LUT_stack(seg) = slice; 
-end
-figure;
-plot(1 : 256, LUT_stack);
-ylabel('\phi [rad]')
-xlabel('Voltage [a.u]')
-yticks([0, pi, 2*pi, 3*pi, 4*pi, 5*pi, 6*pi 7*pi]);
-yticklabels({'0', '\pi', '2\pi', '3\pi', '4\pi', '5\pi', '6\pi', '7\pi'});
-
-%% Stack LUTs 2pi
-LUT_stack2 = zeros(256, 1);
-LUT_stack2(segments{1}) = LUTs{1};
-for ii = 2 : length(LUTs)
-    slice = LUTs{ii};
-    slice = slice(2 : end);
-    if mod(ii, 2) == 0
-        slice = slice + pi;
-    end
-    seg = segments{ii}(2 : end);
-    LUT_stack2(seg) = slice; 
-end
-figure;
-plot(1 : 256, LUT_stack2);
-ylabel('\phi [rad]')
-xlabel('Voltage [a.u]')
-yticks([0, pi, 2*pi]);
-yticklabels({'0', '\pi', '2\pi'});
-
-%% pixel-wise LUT playground
-
-% pixel coordinates
-x = 20;
-y = 6;
-pixel_vid = captured_d(x, y, :);
-v = 1 : 256;
-pvid = pixel_vid(:);
-
-tf_max = islocalmax(pvid, 'MinSeparation', 8);
-tf_min = islocalmin(pvid, 'MinSeparation', 8);
-xmax = v(tf_max);
-xmin = v(tf_min);
-ymax = pvid(tf_max);
-ymin = pvid(tf_min);
-
-[ymin_sorted, xmin_sorted] = sort(ymin); 
-[ymax_sorted, xmax_sorted] = sort(ymax); 
-
-right_seg = xmin(xmin_sorted(3)) : 256;
-first_peak_seg = 1 : xmin(1);
-second_peak_seg = xmin(1) : xmin(2);
-third_peak_seg = xmin(xmin_sorted(2)) : xmin(xmin_sorted(3));
-
-right_poly = seg_poly(right_seg, pvid, 3);
-third_peak_poly = seg_poly(third_peak_seg, pvid, 3);
-
-proc_pvid = pvid;
-proc_pvid(third_peak_seg) = third_peak_poly;
-proc_pvid(right_seg) = right_poly;
-
-figure;
-plot(1:256, proc_pvid);
 
 %% plot random pixel measurements
-
 PLOT = 1;
 figure;
 for ii = 1 : 20
@@ -190,8 +75,12 @@ pixel_vid = trans_vid(x, y, :);
 pvid = pixel_vid(:);
 figure;
 plot(pvid);
+xlabel('Voltage [a.u]');
+ylabel('Intensity [a.u]');
 figure;
 pvid_proc = preprocess_meas(pvid, 1);
+xlabel('Voltage [a.u]');
+ylabel('Intensity [a.u]');
 PLOT_EXT = 1;
 figure;
 [LUT_stack, LUT_stack_2pi] = pixel_LUT(pvid, PLOT_EXT);
