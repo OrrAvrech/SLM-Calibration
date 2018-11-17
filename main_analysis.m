@@ -41,10 +41,12 @@ for frame_num = 1 : num_frames
     captured_d(:,:,frame_num) = snap_frame_d;
 end
 %% Get transformation
-
+inputPts  = [150 1540; 150 400; 900 400]; % load registration points
+movingPts = [1241 54; 54 71; 64 985]; % manual point extraction
+tform = fitgeotrans(movingPts, inputPts, 'affine');
 
 %% Transform Vid
-trans_vid = imwarp(captured_d, inv_tform);
+trans_vid = imwarp(captured_d, tform); % SLM coordinates
 
 %% Main Function ; Input: trans_vid, wanted (x,y) ; Output: LUT
 pixel_vid = recon_vid(x,y,:);

@@ -7,7 +7,7 @@ Init;
 captured = avi2gray('constant.avi');
 [height, width, num_frames] = size(captured);
 %% Get a frame
-frame_number = 100;
+frame_number = 200;
 snap_frame = captured(:,:,frame_number);
 
 %% Denoise 1 - Subtract aproximated y axis interval sine noise
@@ -16,13 +16,13 @@ snap_frame_fourier = fftshift(fft2(snap_frame)); %
 snap_frame_f = abs(snap_frame_fourier);
 snap_frame_f_d = snap_frame_fourier;
 mask_center_dist = 2;
-mask_width = 60;
+mask_width = 90;
 snap_frame_f_d((height/2-(mask_center_dist+mask_width)):(height/2-mask_center_dist),width/2+1) = min(min(snap_frame_f));
 snap_frame_f_d((height/2+mask_center_dist):(height/2+(mask_center_dist+mask_width)),width/2+1) = min(min(snap_frame_f));
 % snap_frame_d = ifft2(exp(snap_frame_f_d-1));
 snap_frame_d = abs(ifft2(ifftshift(snap_frame_f_d)));
 % snap_frame_d = log(snap_frame_d)+1;
-
+snap_frame_d = filter2(fspecial('average',2),snap_frame_d);
 %% Display fourier plane
 close all;
 figure();
@@ -64,7 +64,7 @@ figure;
 imshow(snap_frame, []);
 title('Original');
 figure;
-snap_frame_d = snap_frame-noise_est_2d*0.5;
+snap_frame_d2 = snap_frame-noise_est_2d*0.5;
 imshow(snap_frame_d, []);
 title('Denoised');
 impixelinfo;
@@ -79,11 +79,12 @@ for frame_num = 1 : num_frames
     snap_frame_f_d((height/2-(mask_center_dist+mask_width)):(height/2-mask_center_dist),width/2+1) = min(min(snap_frame_f));
     snap_frame_f_d((height/2+mask_center_dist):(height/2+(mask_center_dist+mask_width)),width/2+1) = min(min(snap_frame_f));
     snap_frame_d = abs(ifft2(ifftshift(snap_frame_f_d)));
+    snap_frame_d = filter2(fspecial('average',2),snap_frame_d);
     captured_d(:,:,frame_num) = snap_frame_d;
 end
 
 %% Denoise video - Denoise 2
-captured_d = zeros(size(captured));
+captured_d2 = zeros(size(captured));
 % Fit function - sum of 4 sine functions plus bias - overall 19 parameters
 F = @(x,xdata)x(1)*sin(x(2)*xdata+x(3)) + x(4) + x(5)*sin(x(6)*xdata+x(7))+ x(8)*sin(x(9)*xdata+x(10))+x(11)*sin(x(12)*xdata+x(13))+x(14)*sin(x(15)*xdata+x(16))+x(17)*sin(x(18)*xdata+x(19));
 x0 = [1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]; %initial conditions (19)
@@ -99,7 +100,7 @@ for frame_num = 1 : num_frames
     noise_est_1d_norm = noise_est_1d*mean(mean(snap_frame)); % normalize noise
     noise_est_2d = repmat(noise_est_1d_norm', 1, width);
     snap_frame_d = snap_frame - noise_est_2d; % denoise, subtract noise
-    captured_d(:,:,frame_num) = snap_frame_d;
+    captured_d2(:,:,frame_num) = snap_frame_d;
 end
 %% extract a pixel and plot
 x = 530;
