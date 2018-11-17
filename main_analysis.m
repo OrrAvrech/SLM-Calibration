@@ -10,7 +10,7 @@ captured = avi2gray(path_to_meas);
 %% Denoise video - Denoise 1
 captured_d = zeros(size(captured));
 mask_center_dist = 2;
-mask_width = 60;
+mask_width = 90;
 for frame_num = 1 : num_frames
     snap_frame = captured(:,:,frame_num);
     snap_frame_fourier = fftshift(fft2(snap_frame));
@@ -18,6 +18,7 @@ for frame_num = 1 : num_frames
     snap_frame_f_d((height/2-(mask_center_dist+mask_width)):(height/2-mask_center_dist),width/2+1) = min(min(snap_frame_f));
     snap_frame_f_d((height/2+mask_center_dist):(height/2+(mask_center_dist+mask_width)),width/2+1) = min(min(snap_frame_f));
     snap_frame_d = abs(ifft2(ifftshift(snap_frame_f_d)));
+    snap_frame_d = filter2(fspecial('average',2),snap_frame_d);
     captured_d(:,:,frame_num) = snap_frame_d;
 end
 
