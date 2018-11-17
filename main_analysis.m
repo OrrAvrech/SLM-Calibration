@@ -14,6 +14,7 @@ mask_width = 90;
 for frame_num = 1 : num_frames
     snap_frame = captured(:,:,frame_num);
     snap_frame_fourier = fftshift(fft2(snap_frame));
+    snap_frame_f = abs(snap_frame_fourier);
     snap_frame_f_d = snap_frame_fourier;    
     snap_frame_f_d((height/2-(mask_center_dist+mask_width)):(height/2-mask_center_dist),width/2+1) = min(min(snap_frame_f));
     snap_frame_f_d((height/2+mask_center_dist):(height/2+(mask_center_dist+mask_width)),width/2+1) = min(min(snap_frame_f));
@@ -132,3 +133,98 @@ ylabel('\phi [rad]')
 xlabel('Voltage [a.u]')
 yticks([0, pi, 2*pi]);
 yticklabels({'0', '\pi', '2\pi'});
+
+%% pixel-wise LUT playground
+
+% pixel coordinates
+x = 20;
+y = 6;
+pixel_vid = captured_d(x, y, :);
+v = 1 : 256;
+pvid = pixel_vid(:);
+
+tf_max = islocalmax(pvid, 'MinSeparation', 8);
+tf_min = islocalmin(pvid, 'MinSeparation', 8);
+xmax = v(tf_max);
+xmin = v(tf_min);
+ymax = pvid(tf_max);
+ymin = pvid(tf_min);
+
+[ymin_sorted, xmin_sorted] = sort(ymin); 
+[ymax_sorted, xmax_sorted] = sort(ymax); 
+
+right_seg = xmin(xmin_sorted(3)) : 256;
+first_peak_seg = 1 : xmin(1);
+second_peak_seg = xmin(1) : xmin(2);
+third_peak_seg = xmin(xmin_sorted(2)) : xmin(xmin_sorted(3));
+
+right_poly = seg_poly(right_seg, pvid, 3);
+third_peak_poly = seg_poly(third_peak_seg, pvid, 3);
+
+proc_pvid = pvid;
+proc_pvid(third_peak_seg) = third_peak_poly;
+proc_pvid(right_seg) = right_poly;
+
+figure;
+plot(1:256, proc_pvid);
+
+%% plot random pixel measurements
+
+PLOT = 1;
+figure;
+for ii = 1 : 20
+x = randi(size(trans_vid, 1));
+y = randi(size(trans_vid, 2));
+pixel_vid = trans_vid(x, y, :);
+pvid = pixel_vid(:);
+proc_pvid = preprocess_meas(pvid, PLOT);
+hold on
+end
+hold off
+
+%% plot LUTs
+close all;
+x = randi(size(trans_vid, 1));
+y = randi(size(trans_vid, 2));
+pixel_vid = trans_vid(x, y, :);
+pvid = pixel_vid(:);
+figure;
+plot(pvid);
+figure;
+pvid_proc = preprocess_meas(pvid, 1);
+PLOT_EXT = 1;
+figure;
+[LUT_stack, LUT_stack_2pi] = pixel_LUT(pvid, PLOT_EXT);
+
+figure;
+plot(v, LUT_stack);
+ylabel('\phi [rad]')
+xlabel('Voltage [a.u]')
+yticks([0, pi, 2*pi, 3*pi, 4*pi, 5*pi, 6*pi 7*pi]);
+yticklabels({'0', '\pi', '2\pi', '3\pi', '4\pi', '5\pi', '6\pi', '7\pi'});
+
+figure;
+plot(v, LUT_stack_2pi);
+ylabel('\phi [rad]')
+xlabel('Voltage [a.u]')
+yticks([0, pi, 2*pi]);
+yticklabels({'0', '\pi', '2\pi'});
+
+%% plot random pixel LUTs
+PLOT_EXT = 0;
+figure;
+for ii = 1 : 20
+    x = randi(size(trans_vid, 1));
+    y = randi(size(trans_vid, 2));
+    pixel_vid = trans_vid(x, y, :);
+    pvid = pixel_vid(:);
+    [LUT_stack, LUT_stack_2pi] = pixel_LUT(pvid, PLOT_EXT);
+    plot(v, LUT_stack_2pi);
+    ylabel('\phi [rad]')
+    xlabel('Voltage [a.u]')
+    yticks([0, pi, 2*pi]);
+    yticklabels({'0', '\pi', '2\pi'});
+    hold on
+end
+hold off
+
