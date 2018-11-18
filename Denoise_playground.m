@@ -65,7 +65,7 @@ imshow(snap_frame, []);
 title('Original');
 figure;
 snap_frame_d2 = snap_frame-noise_est_2d*0.5;
-imshow(snap_frame_d, []);
+imshow(snap_frame_d2, []);
 title('Denoised');
 impixelinfo;
 %% Denoise video - Denoise 1
