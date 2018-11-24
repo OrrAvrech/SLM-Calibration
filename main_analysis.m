@@ -51,7 +51,7 @@ tform = fitgeotrans(movingPts, inputPts, 'affine');
 trans_vid = imwarp(captured_d, tform); % SLM coordinates
 
 %% Main Function ; Input: trans_vid, wanted (x,y) ; Output: LUT
-LUT = pixel_LUT_wrapper(trans_vid, x, y);
+[LUT, LUT_2pi] = pixel_LUT_wrapper(trans_vid, x, y);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% plot random pixel measurements
@@ -71,6 +71,7 @@ hold off
 close all;
 x = randi(size(trans_vid, 1));
 y = randi(size(trans_vid, 2));
+v = 0 : 255;
 pixel_vid = trans_vid(x, y, :);
 pvid = pixel_vid(:);
 figure;
@@ -117,3 +118,26 @@ for ii = 1 : 20
 end
 hold off
 
+%% SLM LUTs
+H = size(trans_vid, 1);
+W = size(trans_vid, 2);
+slm_img = zeros(H, W, 6);
+PLOT_EXT = 0;
+tic
+for ii = 1 : 6
+    disp(ii);
+    for x = 1 : H
+        for y = 1 : W
+            try
+                [LUT, ~] = pixel_LUT_wrapper(trans_vid, x, y);
+                voltage = find(LUT == ii*pi);
+                % 0-255
+                slm_img(x, y, ii) = voltage - 1;
+            catch
+                continue
+            end
+        end
+    end
+end
+toc
+save('slm_all.mat', 'slm_img');
