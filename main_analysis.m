@@ -141,3 +141,17 @@ for ii = 1 : 6
 end
 toc
 save('slm_all.mat', 'slm_img');
+
+%% plot SLMs
+slm = load('slm_all.mat');
+for ii = 1 : size(slm.slm_img, 3)
+    figure;
+    imagesc(slm.slm_img(:,:,ii))
+    if ii == 1
+        title('\pi')
+    else
+        title([num2str(ii), '\pi'])
+    end
+    colorbar
+end
+
